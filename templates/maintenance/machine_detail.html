@@ -1,0 +1,41 @@
+{% extends 'maintenance/base.html' %}
+
+{% block title %}Machine Detail{% endblock %}
+
+{% block content %}
+<h3 class="mb-3">{{ object.code }} - {{ object.name }}</h3>
+<div class="row g-3">
+  <div class="col-md-4">
+    {% if object.image %}
+      <img src="{{ object.image.url }}" class="img-fluid rounded border">
+    {% else %}
+      <div class="text-muted">No image</div>
+    {% endif %}
+  </div>
+  <div class="col-md-8">
+    <dl class="row">
+      <dt class="col-sm-3">Category</dt><dd class="col-sm-9">{{ object.category }}</dd>
+      <dt class="col-sm-3">Location</dt><dd class="col-sm-9">{{ object.location }}</dd>
+      <dt class="col-sm-3">Serial</dt><dd class="col-sm-9">{{ object.serial_no|default:'-' }}</dd>
+      <dt class="col-sm-3">Purchased</dt><dd class="col-sm-9">{{ object.purchase_date|date:'Y-m-d' }}</dd>
+    </dl>
+  </div>
+</div>
+
+<h5 class="mt-4">Maintenance Plans</h5>
+<table class="table table-sm">
+  <thead><tr><th>Title</th><th>Freq</th><th>Last Done</th><th>Next Due</th></tr></thead>
+  <tbody>
+    {% for p in object.plans.all %}
+      <tr>
+        <td>{{ p.title }}</td>
+        <td>{{ p.frequency_value }} {{ p.get_frequency_unit_display }}</td>
+        <td>{{ p.last_done_date|default:'-' }}</td>
+        <td><span class="badge text-bg-warning">{{ p.next_due_date }}</span></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" class="text-muted">ยังไม่มีแผน PM</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

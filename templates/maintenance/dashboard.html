@@ -1,0 +1,334 @@
+{% extends 'maintenance/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card shadow-sm border-primary">
+      <div class="card-body text-center">
+        <i class="fas fa-cogs fa-2x text-primary mb-2"></i>
+        <div class="fs-1 fw-bold text-primary">{{ machine_count }}</div>
+        <div class="text-muted">เครื่องจักรทั้งหมด</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm border-warning">
+      <div class="card-body text-center">
+        <i class="fas fa-clipboard-list fa-2x text-warning mb-2"></i>
+        <div class="fs-1 fw-bold text-warning">{{ wo_open }}</div>
+        <div class="text-muted">Work Orders เปิด</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm border-success">
+      <div class="card-body text-center">
+        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+        <div class="fs-1 fw-bold text-success">{{ due_soon|length }}</div>
+        <div class="text-muted">PM ใกล้ครบกำหนด</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm border-info">
+      <div class="card-body text-center">
+        <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+        <div class="fs-1 fw-bold text-info">95%</div>
+        <div class="text-muted">ประสิทธิภาพระบบ</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-3 mb-4">
+  <!-- Bar Chart - Work Orders by Type -->
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Work Orders ตามประเภท</h6>
+      </div>
+      <div class="card-body">
+        <canvas id="workOrderChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Pie Chart - Machine Status -->
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-success text-white">
+        <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>สถานะเครื่องจักร</h6>
+      </div>
+      <div class="card-body">
+        <canvas id="machineStatusChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <!-- Line Chart - Maintenance Trend -->
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-info text-white">
+        <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>แนวโน้มการบำรุงรักษา (6 เดือนล่าสุด)</h6>
+      </div>
+      <div class="card-body">
+        <canvas id="maintenanceTrendChart" height="150"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Doughnut Chart - Priority Distribution -->
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-header bg-warning text-white">
+        <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>ระดับความสำคัญ</h6>
+      </div>
+      <div class="card-body">
+        <canvas id="priorityChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PM Due Soon Table -->
+<div class="card shadow-sm">
+  <div class="card-header bg-warning text-white">
+    <h6 class="mb-0"><i class="fas fa-clock me-2"></i>PM ใกล้ถึงกำหนด (7 วัน)</h6>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th><i class="fas fa-cog me-2"></i>เครื่องจักร</th>
+            <th><i class="fas fa-clipboard me-2"></i>แผน</th>
+            <th><i class="fas fa-calendar me-2"></i>กำหนด</th>
+            <th><i class="fas fa-exclamation-circle me-2"></i>สถานะ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in due_soon %}
+            <tr>
+              <td>
+                <strong>{{ p.machine.code }}</strong><br>
+                <small class="text-muted">{{ p.machine.name }}</small>
+              </td>
+              <td>{{ p.title }}</td>
+              <td>
+                <span class="badge bg-warning text-dark">
+                  <i class="fas fa-calendar-alt me-1"></i>{{ p.next_due_date }}
+                </span>
+              </td>
+              <td>
+                <span class="badge bg-danger">
+                  <i class="fas fa-exclamation-triangle me-1"></i>ใกล้ครบกำหนด
+                </span>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="4" class="text-center text-muted py-4">
+                <i class="fas fa-check-circle fa-2x mb-2"></i><br>
+                ไม่มี PM ที่ใกล้ครบกำหนด
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart.js default configuration
+    Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+    Chart.defaults.font.size = 12;
+    
+    // Work Orders by Type - Bar Chart
+    const ctx1 = document.getElementById('workOrderChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: ['Preventive', 'Corrective', 'Inspection'],
+            datasets: [{
+                label: 'จำนวน Work Orders',
+                data: [25, 15, 8],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(75, 192, 192, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(75, 192, 192, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 5
+                    }
+                }
+            }
+        }
+    });
+
+    // Machine Status - Pie Chart
+    const ctx2 = document.getElementById('machineStatusChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'pie',
+        data: {
+            labels: ['ใช้งานปกติ', 'ต้องบำรุงรักษา', 'เสีย/หยุดใช้'],
+            datasets: [{
+                data: [{{ machine_count|default:0 }}, {{ due_soon|length|default:0 }}, 2],
+                backgroundColor: [
+                    'rgba(40, 167, 69, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(220, 53, 69, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(40, 167, 69, 1)',
+                    'rgba(255, 193, 7, 1)',
+                    'rgba(220, 53, 69, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Maintenance Trend - Line Chart
+    const ctx3 = document.getElementById('maintenanceTrendChart').getContext('2d');
+    new Chart(ctx3, {
+        type: 'line',
+        data: {
+            labels: ['มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม'],
+            datasets: [{
+                label: 'PM ที่ทำเสร็จ',
+                data: [12, 19, 15, 18, 22, 16],
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'CM ที่ทำเสร็จ',
+                data: [8, 12, 10, 15, 9, 11],
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 5
+                    }
+                }
+            }
+        }
+    });
+
+    // Priority Distribution - Doughnut Chart
+    const ctx4 = document.getElementById('priorityChart').getContext('2d');
+    new Chart(ctx4, {
+        type: 'doughnut',
+        data: {
+            labels: ['สูง', 'ปานกลาง', 'ต่ำ'],
+            datasets: [{
+                data: [8, {{ wo_open|default:0 }}, 15],
+                backgroundColor: [
+                    'rgba(220, 53, 69, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(40, 167, 69, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(220, 53, 69, 1)',
+                    'rgba(255, 193, 7, 1)',
+                    'rgba(40, 167, 69, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+});
+</script>
+
+<style>
+.card {
+    border-radius: 10px;
+    border: none;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+    font-weight: 600;
+}
+
+.table th {
+    font-weight: 600;
+    border-top: none;
+}
+
+.badge {
+    font-size: 0.8em;
+}
+
+@media (max-width: 768px) {
+    .fs-1 {
+        font-size: 2rem !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_footer %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}

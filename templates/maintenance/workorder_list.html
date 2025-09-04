@@ -1,0 +1,65 @@
+{% extends 'maintenance/base.html' %}
+
+{% block title %}Work Orders{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">Work Orders</h3>
+  <a href="{% url 'workorder_create' %}" class="btn btn-primary btn-sm">+ Add Work Order</a>
+</div>
+
+<table class="table table-hover align-middle">
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Machine</th>
+      <th>Type</th>
+      <th>Priority</th>
+      <th>Status</th>
+      <th>Reported</th>
+      <th>Due Date</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for wo in object_list %}
+      <tr>
+        <td>{{ wo.code }}</td>
+        <td>{{ wo.machine.code }} - {{ wo.machine.name }}</td>
+        <td>{{ wo.get_wo_type_display }}</td>
+        <td>
+          {% if wo.priority == "HIGH" %}
+            <span class="badge bg-danger">{{ wo.get_priority_display }}</span>
+          {% elif wo.priority == "MED" %}
+            <span class="badge bg-warning text-dark">{{ wo.get_priority_display }}</span>
+          {% else %}
+            <span class="badge bg-success">{{ wo.get_priority_display }}</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if wo.status == "OPEN" %}
+            <span class="badge bg-secondary">{{ wo.get_status_display }}</span>
+          {% elif wo.status == "IN_PROGRESS" %}
+            <span class="badge bg-info text-dark">{{ wo.get_status_display }}</span>
+          {% elif wo.status == "DONE" %}
+            <span class="badge bg-success">{{ wo.get_status_display }}</span>
+          {% else %}
+            <span class="badge bg-dark">{{ wo.get_status_display }}</span>
+          {% endif %}
+        </td>
+        <td>{{ wo.reported_at|date:"Y-m-d H:i" }}</td>
+        <td>{{ wo.due_date|default:"-" }}</td>
+        <td>
+          <a href="{% url 'workorder_edit' wo.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="8" class="text-muted">ยังไม่มีใบงานซ่อม</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

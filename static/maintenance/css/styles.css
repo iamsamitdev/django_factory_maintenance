@@ -1,0 +1,17 @@
+/* Font face */
+@font-face {
+  font-family: 'Anuphan', sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  src: url('../fonts/Anuphan-Regular.ttf') format('truetype');
+}
+
+body {
+  font-family: 'Anuphan', sans-serif;
+}
+
+.badge-danger-soft {
+  background: #f8d7da;
+  color: #842029;
+  border: 1px solid #f5c2c7;
+}

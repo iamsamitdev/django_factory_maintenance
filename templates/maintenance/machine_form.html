@@ -1,0 +1,16 @@
+{% extends 'maintenance/base.html' %}
+
+{% block title %}เพิ่มเครื่องจักรใหม่{% endblock %}
+
+{% block content %}
+<h3 class="mb-3">Machine</h3>
+<form method="post" enctype="multipart/form-data" class="card card-body shadow-sm">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <div class="mb-3">
+    <img id="imgPreview" class="img-thumbnail" style="max-height:200px" alt="">
+  </div>
+  <button class="btn btn-primary">Save</button>
+  <a href="{% url 'machine_list' %}" class="btn btn-secondary">Back</a>
+</form>
+{% endblock %}

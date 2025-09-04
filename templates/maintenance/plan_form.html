@@ -1,0 +1,17 @@
+{% extends 'maintenance/base.html' %}
+
+{% block title %}Plan Form{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-3">Maintenance Plan</h3>
+
+<form method="post" class="card card-body shadow-sm">
+  {% csrf_token %}
+  {{ form.as_p }}
+
+  <button class="btn btn-primary">Save</button>
+  <a href="{% url 'plan_list' %}" class="btn btn-secondary">Back</a>
+</form>
+
+{% endblock %}

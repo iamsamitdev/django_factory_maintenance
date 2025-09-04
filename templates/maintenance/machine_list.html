@@ -1,0 +1,36 @@
+{% extends 'maintenance/base.html' %}
+
+{% block title %}Machines{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">Machines</h3>
+  <a href="{% url 'machine_create' %}" class="btn btn-primary btn-sm">+ Add Machine</a>
+</div>
+
+<form class="row g-2 mb-3">
+  <div class="col-auto">
+    <input name="q" class="form-control form-control-sm" placeholder="ค้นหา code หรือชื่อ" value="{{ request.GET.q }}">
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-outline-secondary btn-sm">ค้นหา</button>
+  </div>
+</form>
+
+<table class="table table-hover align-middle">
+  <thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Location</th><th></th></tr></thead>
+  <tbody>
+    {% for m in object_list %}
+      <tr>
+        <td>{{ m.code }}</td>
+        <td><a href="{% url 'machine_detail' m.pk %}">{{ m.name }}</a></td>
+        <td>{{ m.category.name }}</td>
+        <td>{{ m.location }}</td>
+        <td><a href="{% url 'machine_edit' m.pk %}" class="btn btn-sm btn-outline-primary">Edit</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" class="text-muted">ยังไม่มีข้อมูล</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

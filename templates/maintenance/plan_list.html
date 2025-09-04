@@ -1,0 +1,48 @@
+{% extends 'maintenance/base.html' %}
+
+{% block title %}Maintenance Plans{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">Maintenance Plans</h3>
+  <a href="{% url 'plan_create' %}" class="btn btn-primary btn-sm">+ Add Plan</a>
+</div>
+
+<table class="table table-hover align-middle">
+  <thead>
+    <tr>
+      <th>Machine</th>
+      <th>Title</th>
+      <th>Frequency</th>
+      <th>Last Done</th>
+      <th>Next Due</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in object_list %}
+      <tr>
+        <td>{{ p.machine.code }} - {{ p.machine.name }}</td>
+        <td>{{ p.title }}</td>
+        <td>{{ p.frequency_value }} {{ p.get_frequency_unit_display }}</td>
+        <td>{{ p.last_done_date|default:"-" }}</td>
+        <td>
+          {% if p.next_due_date %}
+            <span class="badge text-bg-warning">{{ p.next_due_date }}</span>
+          {% else %}
+            <span class="text-muted">N/A</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'plan_edit' p.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="6" class="text-muted">ยังไม่มีแผนซ่อมบำรุง</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
