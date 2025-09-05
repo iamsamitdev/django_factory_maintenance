@@ -300,7 +300,86 @@ docker compose down -v
 - URL: `http://localhost:8000/admin/`
 - จัดการข้อมูลผ่าน Django Admin
 
-## 🛡️ การปรับแต่งสำหรับ Production
+## � การเปรียบเทียบ 2 วิธีการ Deployment
+
+### 1. Direct Django (port 8000)
+### 2. Nginx Proxy (port 8080)
+
+### ⚖️ ข้อดี/ข้อเสีย:
+
+#### 🎯 Direct Django (157.230.39.181:8000)
+**✅ ข้อดี:**
+- **Simple Setup** → ไม่ซับซ้อน
+- **Less Components** → น้อยชิ้นส่วน น้อยปัญหา
+- **Direct Response** → ตอบสนองโดยตรง
+- **Easy Debug** → debug ง่าย เห็น error ชัดเจน
+- **Development Friendly** → เหมาะสำหรับ development
+
+**❌ ข้อเสีย:**
+- **Performance** → Gunicorn ไม่เก่งเรื่อง static files
+- **Security** → ไม่มี security layer เพิ่มเติม
+- **SSL/HTTPS** → จัดการ SSL ยาก
+- **Load Balancing** → ไม่สามารถกระจาย load ได้
+- **Static Files** → serve static files ช้า
+
+#### 🚀 Nginx Proxy (157.230.39.181:8080)
+**✅ ข้อดี:**
+- **Static Files Performance** → เร็วมาก! nginx เก่งเรื่องนี้
+- **Security** → มี security headers, rate limiting
+- **SSL Termination** → จัดการ HTTPS ได้ง่าย
+- **Load Balancing** → กระจาย load ได้หลาย Django instances
+- **Caching** → cache static files ได้
+- **Compression** → gzip compression
+- **Production Ready** → เหมาะสำหรับ production
+
+**❌ ข้อเสีย:**
+- **Complexity** → ซับซ้อนขึ้น
+- **More Components** → มีจุดที่อาจเสียได้มากขึ้น
+- **Configuration** → ต้องจัดการ config 2 ระบบ
+- **Resource Usage** → ใช้ memory มากขึ้น
+
+### 📊 Performance Comparison:
+```bash
+# ทดสอบ performance
+curl -o /dev/null -s -w "Django Direct: %{time_total}s, Size: %{size_download} bytes\n" http://localhost:8000/static/maintenance/css/bootstrap.min.css
+
+curl -o /dev/null -s -w "Nginx Proxy: %{time_total}s, Size: %{size_download} bytes\n" http://localhost:8080/static/maintenance/css/bootstrap.min.css
+```
+
+**🎯 ผลการทดสอบ:**
+- Django Direct: 0.015621s
+- Nginx Proxy: 0.015749s
+- (ความแตกต่างเล็กน้อยเนื่องจากเป็น local test)
+
+### 🏭 ทำไมต้องใช้ Nginx:
+
+#### 1. Production Requirements
+#### 2. Architecture Benefits
+
+**🔧 Real-world Performance:**
+- **Static Files**: 10-100x เร็วกว่า Django
+- **Compression**: ลดขนาดไฟล์ 60-80%
+- **Caching**: response time ลดลง 90%
+- **SSL**: hardware acceleration
+- **Security**: DDoS protection, rate limiting
+
+### 🎯 แนะนำการใช้งาน:
+- **Development**: Direct Django (port 8000)
+- **Production**: Nginx Proxy (port 8080)
+
+### 📊 สรุปการเปรียบเทียบ:
+
+| ด้าน | Django Direct | Nginx Proxy |
+|------|---------------|-------------|
+| **Setup** | ⭐⭐⭐⭐⭐ ง่าย | ⭐⭐⭐ ซับซ้อน |
+| **Performance** | ⭐⭐ ปกติ | ⭐⭐⭐⭐⭐ เร็วมาก |
+| **Security** | ⭐⭐ พื้นฐาน | ⭐⭐⭐⭐⭐ ครบครัน |
+| **Scalability** | ⭐⭐ จำกัด | ⭐⭐⭐⭐⭐ ดีมาก |
+| **Production Ready** | ⭐⭐ ไม่แนะนำ | ⭐⭐⭐⭐⭐ แนะนำ |
+
+**สำหรับ Factory Maintenance System ของ Minebea: แนะนำใช้ Nginx เพื่อ performance และ security ที่ดีกว่าครับ!** 🎉
+
+## �🛡️ การปรับแต่งสำหรับ Production
 
 ### 🐳 Docker Production (แนะนำ)
 ```bash
