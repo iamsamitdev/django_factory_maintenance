@@ -25,6 +25,15 @@
         <div class="card shadow">
           <div class="card-body p-5">
             <h3 class="card-title text-center mb-4">เข้าสู่ระบบ</h3>
+            
+            <!-- Demo Credentials Box -->
+            <div class="alert alert-info" role="alert">
+              <h6 class="alert-heading"><i class="fas fa-info-circle"></i> ข้อมูลสำหรับทดลอง</h6>
+              <hr>
+              <p class="mb-1"><strong>Email:</strong> admin</p>
+              <p class="mb-0"><strong>Password:</strong> admin123</p>
+            </div>
+            
             <form method="post">
                 {% csrf_token %}
                 {{ form.as_p }}
