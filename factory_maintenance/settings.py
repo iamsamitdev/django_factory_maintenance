@@ -27,10 +27,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.getenv("DEBUG")
 
 ALLOWED_HOSTS = ["*"]  # อนุญาตทุก IP
-CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "http://127.0.0.1:8000", "http://0.0.0.0:8000"]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000", 
+    "http://127.0.0.1:8000", 
+    "http://0.0.0.0:8000",
+    "http://localhost:8080",
+    "http://157.230.39.181:8000",
+    "http://157.230.39.181:8080"
+]
 
 
 # Application definition
@@ -140,9 +147,8 @@ STATIC_URL = '/static/'
 # === For prod mode ===
 STATIC_ROOT = Path.joinpath(BASE_DIR, 'staticfiles')
 
-# === For dev mode ===
-if DEBUG:
-    STATICFILES_DIRS = [Path.joinpath(BASE_DIR, 'static')]
+# === Static files directories ===
+STATICFILES_DIRS = [Path.joinpath(BASE_DIR, 'static')]
 
 # === Media files (User uploads) ===
 MEDIA_URL = '/media/'

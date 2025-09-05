@@ -1,0 +1,105 @@
+# Networks
+networks:
+  default:
+    name: factory_maintenance_network
+
+services:
+  # PostgreSQL Database Service
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=en_US.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Django Web Application Service
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: gunicorn --bind 0.0.0.0:8000 --workers 3 factory_maintenance.wsgi:application
+    volumes:
+      - ./media:/app/media  # For user uploaded files
+      - static_volume:/app/staticfiles  # For static files (match Django STATIC_ROOT)
+    ports:
+      - "8000:8000"
+    networks:
+      - default
+    environment:
+      # Django Settings
+      DEBUG: ${DEBUG}
+      SECRET_KEY: ${SECRET_KEY}
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE}
+      
+      # Database Configuration
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      
+      # Timezone & Localization (Based on Day2-DjangoMinebea.md)
+      TZ: ${TZ}
+      LANGUAGE_CODE: ${LANGUAGE_CODE}
+      
+      # Superuser Creation (for initial setup)
+      DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME}
+      DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
+      DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
+      
+      # Production Settings
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy (Optional - for production)
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - static_volume:/app/staticfiles
+      - ./media:/app/media
+    networks:
+      - default
+    depends_on:
+      - web
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /root/dockerminebea/django_factory_maintenance/volumes/postgres_data
+  static_volume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /root/dockerminebea/django_factory_maintenance/volumes/static_volume
